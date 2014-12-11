@@ -21,6 +21,11 @@ var github = (function(){
           if (!data || !data.data) { return; }
           for (var i = 0; i < data.data.length; i++) {
             if (options.skip_forks && data.data[i].fork) { continue; }
+
+            if (data.data[i].name.lastIndexOf('jdgoldie.github.io', 0) === 0) { continue; }
+            if (data.data[i].name.lastIndexOf('docker',0) !== -1) {continue;}
+            if (data.data[i].name.lastIndexOf('vagrant',0) !== -1) {continue;}
+
             repos.push(data.data[i]);
           }
           if (options.count) { repos.splice(options.count); }
