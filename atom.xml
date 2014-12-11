@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Eventually Consistent]]></title>
+  <link href="http://jdgoldie.github.io/atom.xml" rel="self"/>
+  <link href="http://jdgoldie.github.io/"/>
+  <updated>2014-12-11T16:10:25+00:00</updated>
+  <id>http://jdgoldie.github.io/</id>
+  <author>
+    <name><![CDATA[Joshua Goldie]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+</feed>
