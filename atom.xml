@@ -4,7 +4,7 @@
   <title><![CDATA[Eventually Consistent]]></title>
   <link href="http://jdgoldie.github.io/atom.xml" rel="self"/>
   <link href="http://jdgoldie.github.io/"/>
-  <updated>2014-12-11T18:25:29+00:00</updated>
+  <updated>2014-12-18T10:28:58+00:00</updated>
   <id>http://jdgoldie.github.io/</id>
   <author>
     <name><![CDATA[Joshua Goldie]]></name>
@@ -12,5 +12,76 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Queues Don't Fix Overload]]></title>
+    <link href="http://jdgoldie.github.io/blog/2014/12/12/queues-dont-fix-overload/"/>
+    <updated>2014-12-12T17:00:32+00:00</updated>
+    <id>http://jdgoldie.github.io/blog/2014/12/12/queues-dont-fix-overload</id>
+    <content type="html"><![CDATA[<p>I really enjoyed <a href="https://twitter.com/mononcqc/">Fred Hebert</a>&rsquo;s great post on queues and system overload.  An overflowing sink is my favorite image of what happens to your
+system when a queue is used as a buffer to mask the slow parts of the system.</p>
+
+<p><span class="caption-wrapper left" style="width: 426px"><img class="caption" src="https://lh6.googleusercontent.com/proxy/-trPHfKNxS07bxGXx8qTSaELzrkz-6sPmZ-DGtLhKWbcKPfvK9Wr5zscdk9yLftXT9iBtkR3YWscwmyiunRT152o8gsOCrp9SrivK7EcPXozSd2uI679U1OAgMD1vFo=w426-h295"  alt="Image Credit: Fred Hebert"><span class="caption-text">Image Credit: Fred Hebert</span></span></p>
+
+<p><span class='pullquote-left' data-pullquote='It becomes a kind of bucket list for your application'>
+Systems have limits.  No matter how much we, as developers and architects, like to throw around derivations of the word
+<em>scalable</em> in design discussions, the limits are there.  And you are going to hit them.  Dropping in a queue to buffer
+requests only hides the fact that there is a limit.  It becomes a kind of bucket list for your application &ndash; work you are hoping
+it will complete before it crashes or reaches the next maintenance or upgrade window.  And then, the queue has made the
+problem worse, even if you made it persistent.
+</span></p>
+
+<p>Fred&rsquo;s suggestion, with which I completely agree, is to use back-pressure mechanisms so the system gracefully handles
+new user requests as it approaches its operational limits.</p>
+
+<blockquote><p>But someone should have picked what had to give: do you stop people from inputting stuff in the system,
+or do you shed load. Those are inescapable choices, where inaction leads to system failure.</p>
+
+<p>And you know what&rsquo;s cool? If you identify these bottlenecks you have for real in your system, and you put
+them behind proper back-pressure mechanisms, your system won&rsquo;t even have the right to become slow.</p></blockquote>
+
+<p><span class='pullquote-right' data-pullquote='No feedback at all is worse that telling the user that the system is busy.'>
+Notice that this only keeps your system from becoming slow and falling over on itself.  It <em>does not</em> guarantee that all
+user requests will be served, merely that they will be handled.  This may sound like splitting hairs, but telling the
+user that the system is too busy to handle their request is better than failing to respond before reaching either the HTTP tineout
+or the limit of their patience.  No feedback at all is worse that telling the user that the system is busy.
+</span></p>
+
+<p>Back-pressure mechanisms, both formal and informal, exist all around us:</p>
+
+<ul>
+<li>A theme park stops letting riders enqueue for a <a href="https://www.universalorlando.com/Rides/Universal-Studios-Florida/Harry-Potter-And-The-Escape-From-Gringotts.aspx">popular attraction</a> if they cannot get through the ride before the park closes</li>
+<li>A cell-phone sends a new caller to voice-mail if a call is already in progress</li>
+<li>A line outside a restaurant signals a potential diner to seek other options</li>
+</ul>
+
+
+<p><span class="caption-wrapper center" style="width: 500px"><img class="caption" src="https://farm4.staticflickr.com/3765/9501576373_1c159d36f1.jpg" width="500" height="367"  alt="Image Credit: [Corey Seeman][5]"><span class="caption-text">Image Credit: <a href="https://flic.kr/p/ftC4Ci">Corey Seeman</a></span></span></p>
+
+<p>It may seem strange, perhaps even wrong to plan to refuse a user request, but it actually provides a better experience than trying
+to take on more work than the system can handle.  Imagine if the theme park didn&rsquo;t close the line until the park closed, and at that point,
+everyone still waiting had to leave.  Those riders would have a worse experience than being turned away from the line in the first
+place.  They go away disappointed instead of angry and they come back earlier the following day.</p>
+
+<blockquote><p>To make stuff usable, a proper idempotent API with end-to-end principles in mind will make it so these instances of
+back-pressure and load shedding should rarely be a problem for your callers, because they can safely retry requests and know if they worked.</p></blockquote>
+
+<p>I recently encountered a failure in an online ticketing system.  I was purchasing tickets to the Nutcracker Ballet, and after debating the merits
+of orchestra-rear versus first-balcony seats, I was ready to checkout.  Three pretty good seats were in the cart, parking was reserved,
+credit card information was entered.  I hit <em>Complete Purchase</em>.  I watched the spinner until the request timed out.</p>
+
+<p>Did I get the seats?  Had my credit card been charged?  How long should I wait for a confirmation email before assuming the purchase
+had not gone through?  I tried again with the same result.  I tried again.   The ticketing system was
+now completely unresponsive.  Did I have six tickets to the ballet?  I wrestled with this and other questions
+as I tried to get to sleep that night.</p>
+
+<p><span class='pullquote-right' data-pullquote='I don&#8217;t have to be a UX guy to know that&#8217;s a horrible user experience.'>
+I checked the next morning and saw that the first set of seats I had attempted to purchase were still showing as available.  That meant
+my purchases had failed.  I don&rsquo;t have to be a UX guy to know that&rsquo;s a horrible user experience.  The system should either refuse to let me
+start the ticket selection process or prevent me from completing checkout if it&rsquo;s under too much load.  Either one is a better choice than
+letting the HTTP request timeout.  It&rsquo;s the difference between making your system looking busy and looking broken.
+</span></p>
+]]></content>
+  </entry>
   
 </feed>

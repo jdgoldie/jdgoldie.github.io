@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Eventually Consistent</title>
+  <title>Queues Don&#8217;t Fix Overload - Eventually Consistent</title>
   <meta name="author" content="Joshua Goldie">
 
   
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jdgoldie.github.io">
+  <link rel="canonical" href="http://jdgoldie.github.io/blog/2014/12/12/queues-dont-fix-overload">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Eventually Consistent" type="application/atom+xml">
@@ -63,15 +63,12 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2014/12/12/queues-dont-fix-overload/">Queues Don&#8217;t Fix Overload</a></h1>
+      <h1 class="entry-title">Queues Don&#8217;t Fix Overload</h1>
     
     
       <p class="meta">
@@ -87,7 +84,7 @@
   </header>
 
 
-  <div class="entry-content"><p>I really enjoyed <a href="https://twitter.com/mononcqc/">Fred Hebert</a>&rsquo;s great post on queues and system overload.  An overflowing sink is my favorite image of what happens to your
+<div class="entry-content"><p>I really enjoyed <a href="https://twitter.com/mononcqc/">Fred Hebert</a>&rsquo;s great post on queues and system overload.  An overflowing sink is my favorite image of what happens to your
 system when a queue is used as a buffer to mask the slow parts of the system.</p>
 
 <p><span class="caption-wrapper left" style="width: 426px"><img class="caption" src="https://lh6.googleusercontent.com/proxy/-trPHfKNxS07bxGXx8qTSaELzrkz-6sPmZ-DGtLhKWbcKPfvK9Wr5zscdk9yLftXT9iBtkR3YWscwmyiunRT152o8gsOCrp9SrivK7EcPXozSd2uI679U1OAgMD1vFo=w426-h295"  alt="Image Credit: Fred Hebert"><span class="caption-text">Image Credit: Fred Hebert</span></span></p>
@@ -151,18 +148,50 @@ start the ticket selection process or prevent me from completing checkout if it&
 letting the HTTP request timeout.  It&rsquo;s the difference between making your system looking busy and looking broken.
 </span></p>
 </div>
-  
-  
 
 
-    </article>
+  <footer>
+    <p class="meta">
+      
   
-  <div class="pagination">
+
+<span class="byline author vcard">Posted by <span class="fn">Joshua Goldie</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-12-12T17:00:32+00:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:00 pm</span></time>
+      
+
+
+    </p>
     
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://jdgoldie.github.io/blog/2014/12/12/queues-dont-fix-overload/" data-via="jdgoldie" data-counturl="http://jdgoldie.github.io/blog/2014/12/12/queues-dont-fix-overload/" >Tweet</a>
+  
+  
+  
 </div>
+
+    
+    <p class="meta">
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
 <aside class="sidebar">
   
     <section>
@@ -212,6 +241,7 @@ letting the HTTP request timeout.  It&rsquo;s the difference between making your
   
 </aside>
 
+
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -229,7 +259,10 @@ letting the HTTP request timeout.  It&rsquo;s the difference between making your
       var disqus_shortname = 'eventuallyconsistentblog';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://jdgoldie.github.io/blog/2014/12/12/queues-dont-fix-overload/';
+        var disqus_url = 'http://jdgoldie.github.io/blog/2014/12/12/queues-dont-fix-overload/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
