@@ -6,7 +6,7 @@ comments: true
 categories: 
 external-url: http://ferd.ca/queues-don-t-fix-overload.html
 ---
-I really enjoyed [Fred Hebert][1]'s great post on queues and system overload.  An overflowing sink is my favorite image of what happens to your
+I really enjoyed [Fred Hebert][1]'s great [post][2] on queues and system overload.  An overflowing sink is my favorite image of what happens to your
 system when a queue is used as a buffer to mask the slow parts of the system.  
 
 {% img left caption https://lh6.googleusercontent.com/proxy/-trPHfKNxS07bxGXx8qTSaELzrkz-6sPmZ-DGtLhKWbcKPfvK9Wr5zscdk9yLftXT9iBtkR3YWscwmyiunRT152o8gsOCrp9SrivK7EcPXozSd2uI679U1OAgMD1vFo=w426-h295  "" "Image Credit: Fred Hebert" %}
@@ -19,6 +19,8 @@ requests only hides the fact that there is a limit.  {"It becomes a kind of buck
 it will complete before it crashes or reaches the next maintenance or upgrade window.  And then, the queue has made the 
 problem worse, even if you made it persistent.
 {% endpullquote %}
+
+<!-- more -->
 
 Fred's suggestion, with which I completely agree, is to use back-pressure mechanisms so the system gracefully handles 
 new user requests as it approaches its operational limits.
@@ -71,5 +73,6 @@ letting the HTTP request timeout.  It's the difference between making your syste
 
 
 [1]: https://twitter.com/mononcqc/
+[2]: http://ferd.ca/queues-don-t-fix-overload.html
 [3]: https://www.universalorlando.com/Rides/Universal-Studios-Florida/Harry-Potter-And-The-Escape-From-Gringotts.aspx
 [5]: https://flic.kr/p/ftC4Ci
