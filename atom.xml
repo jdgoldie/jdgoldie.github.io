@@ -4,7 +4,7 @@
   <title><![CDATA[Eventually Consistent]]></title>
   <link href="http://jdgoldie.github.io/atom.xml" rel="self"/>
   <link href="http://jdgoldie.github.io/"/>
-  <updated>2014-12-18T10:33:41+00:00</updated>
+  <updated>2015-01-08T11:18:53+00:00</updated>
   <id>http://jdgoldie.github.io/</id>
   <author>
     <name><![CDATA[Joshua Goldie]]></name>
@@ -12,6 +12,50 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Reliable Delivery in Akka and Number 9]]></title>
+    <link href="http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/"/>
+    <updated>2015-01-07T20:29:58+00:00</updated>
+    <id>http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9</id>
+    <content type="html"><![CDATA[<p>Last week <a href="https://vaughnvernon.co/?page_id=178">Vaughn Vernon</a> teased/announced <a href="https://vaughnvernon.co/?p=976">Number 9</a> which he proposes as an alternative to Akka&rsquo;s AtLeastOnceDelivery.  One interesting difference
+is the use of the Message Journal to store unconfirmed messages.  This design is a siginificant departure from Akka&rsquo;s AtLeastOnceDelivery.</p>
+
+<blockquote><p>You see, AtLeastOnceDelivery doesn’t by default support message persistent storage, and actually only
+offers any resemblance to it when your actor is given a chance to store a snapshot of its current state.
+Since a snapshot is not offered for every message you send via AtLeastOnceDelivery, a crash could easily
+render any number of messages undelivered.</p></blockquote>
+
+<p>Since snapshots are <em>optional</em> and in most cases <em>periodic</em> based on either message throughput or elapsed time, you should
+count on losing messages at some point.</p>
+
+<!-- more -->
+
+
+<p></p>
+
+<p>In addition to being responsible for keeping track of unconfirmed messages, AtLeastOnceDelivery also makes each Entity responsible for attempting redelivery of
+its own messages and tracking delivery confirmations.  <em>Number 9</em> moves the redelivery task to a separate actor named Redeliverer.  This is an interesing idea
+that appears to fix one issue I&rsquo;ve encountered with AtLeastOnceDelivery and its use of the <em>redeliveryTick</em>.</p>
+
+<p>Each actor using AtLeastOnceDelivery sets up a redeliveryTick system timer to trigger a check for unconfirmed messages.  This timer fires even when the actor has no
+unconfirmed messages.  The tick has the side effect of making receiveTimeout unusable.  On a recent project that used the cluster sharding extension with passivation support,
+this conflict prevented actors from passivating correctly.  Actors using AtLeastOnceDelivery with <em>no</em> unconfirmed messages would refuse to passivate as long as they
+were receiving the redeliveryTick.</p>
+
+<p>The Redeliverer looks to move this functionality out of the entities which should allow sharding/passivation to work as designed.</p>
+
+<p>While making these departures from the current implementation, it&rsquo;s important to remember that <em>Number 9</em> is an alternative implementation of at-least-once.</p>
+
+<blockquote><p>Since Number 9 provides an at-least-once delivery mechanism, you will likely want to take whatever design steps are necessary to make the
+[the processor] an Idempotent Receiver. This requirement will be more or less challenging depending on the state machine needed by the actor.</p></blockquote>
+
+<p>Because exactly-once <a href="http://brooker.co.za/blog/2014/11/15/exactly-once.html">is not what you want</a>.</p>
+
+<p>From what&rsquo;s been shared so far <em>Number 9</em> sounds like a good approach to fixing some of the issues with AtLeastOnceDelivery.  The only drawback I see at this point
+is that it&rsquo;s unreleased and I&rsquo;d really love to take a look at the code.  I&rsquo;ll be watching this tool for future articles and releases.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Queues Don't Fix Overload]]></title>

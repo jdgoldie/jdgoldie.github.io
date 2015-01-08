@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Eventually Consistent</title>
+  <title>Reliable Delivery in Akka and Number 9 - Eventually Consistent</title>
   <meta name="author" content="Joshua Goldie">
 
   
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jdgoldie.github.io">
+  <link rel="canonical" href="http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Eventually Consistent" type="application/atom+xml">
@@ -63,15 +63,12 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/">Reliable Delivery in Akka and Number 9</a></h1>
+      <h1 class="entry-title">Reliable Delivery in Akka and Number 9</h1>
     
     
       <p class="meta">
@@ -87,7 +84,7 @@
   </header>
 
 
-  <div class="entry-content"><p>Last week <a href="https://vaughnvernon.co/?page_id=178">Vaughn Vernon</a> teased/announced <a href="https://vaughnvernon.co/?p=976">Number 9</a> which he proposes as an alternative to Akka&rsquo;s AtLeastOnceDelivery.  One interesting difference
+<div class="entry-content"><p>Last week <a href="https://vaughnvernon.co/?page_id=178">Vaughn Vernon</a> teased/announced <a href="https://vaughnvernon.co/?p=976">Number 9</a> which he proposes as an alternative to Akka&rsquo;s AtLeastOnceDelivery.  One interesting difference
 is the use of the Message Journal to store unconfirmed messages.  This design is a siginificant departure from Akka&rsquo;s AtLeastOnceDelivery.</p>
 
 <blockquote><p>You see, AtLeastOnceDelivery doesn’t by default support message persistent storage, and actually only
@@ -98,68 +95,78 @@ render any number of messages undelivered.</p></blockquote>
 <p>Since snapshots are <em>optional</em> and in most cases <em>periodic</em> based on either message throughput or elapsed time, you should
 count on losing messages at some point.</p>
 
+<!-- more -->
+
+
+<p></p>
+
+<p>In addition to being responsible for keeping track of unconfirmed messages, AtLeastOnceDelivery also makes each Entity responsible for attempting redelivery of
+its own messages and tracking delivery confirmations.  <em>Number 9</em> moves the redelivery task to a separate actor named Redeliverer.  This is an interesing idea
+that appears to fix one issue I&rsquo;ve encountered with AtLeastOnceDelivery and its use of the <em>redeliveryTick</em>.</p>
+
+<p>Each actor using AtLeastOnceDelivery sets up a redeliveryTick system timer to trigger a check for unconfirmed messages.  This timer fires even when the actor has no
+unconfirmed messages.  The tick has the side effect of making receiveTimeout unusable.  On a recent project that used the cluster sharding extension with passivation support,
+this conflict prevented actors from passivating correctly.  Actors using AtLeastOnceDelivery with <em>no</em> unconfirmed messages would refuse to passivate as long as they
+were receiving the redeliveryTick.</p>
+
+<p>The Redeliverer looks to move this functionality out of the entities which should allow sharding/passivation to work as designed.</p>
+
+<p>While making these departures from the current implementation, it&rsquo;s important to remember that <em>Number 9</em> is an alternative implementation of at-least-once.</p>
+
+<blockquote><p>Since Number 9 provides an at-least-once delivery mechanism, you will likely want to take whatever design steps are necessary to make the
+[the processor] an Idempotent Receiver. This requirement will be more or less challenging depending on the state machine needed by the actor.</p></blockquote>
+
+<p>Because exactly-once <a href="http://brooker.co.za/blog/2014/11/15/exactly-once.html">is not what you want</a>.</p>
+
+<p>From what&rsquo;s been shared so far <em>Number 9</em> sounds like a good approach to fixing some of the issues with AtLeastOnceDelivery.  The only drawback I see at this point
+is that it&rsquo;s unreleased and I&rsquo;d really love to take a look at the code.  I&rsquo;ll be watching this tool for future articles and releases.</p>
 </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/">Read on &rarr;</a>
-    </footer>
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Joshua Goldie</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-01-07T20:29:58+00:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>7</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>8:29 pm</span></time>
+      
+
+
+    </p>
     
-      <h1 class="entry-title"><a href="/blog/2014/12/12/queues-dont-fix-overload/">Queues Don&#8217;t Fix Overload</a></h1>
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/" data-via="jdgoldie" data-counturl="http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/" >Tweet</a>
+  
+  
+  
+</div>
+
     
-    
-      <p class="meta">
-        
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/12/12/queues-dont-fix-overload/" title="Previous Post: Queues Don't Fix Overload">&laquo; Queues Don&#8217;t Fix Overload</a>
+      
+      
+    </p>
+  </footer>
+</article>
 
-
-
-
-<time class='entry-date' datetime='2014-12-12T17:00:32+00:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:00 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I really enjoyed <a href="https://twitter.com/mononcqc/">Fred Hebert</a>&rsquo;s great <a href="http://ferd.ca/queues-don-t-fix-overload.html">post</a> on queues and system overload.  An overflowing sink is my favorite image of what happens to your
-system when a queue is used as a buffer to mask the slow parts of the system.</p>
-
-<p><span class="caption-wrapper left" style="width: 426px"><img class="caption" src="https://lh6.googleusercontent.com/proxy/-trPHfKNxS07bxGXx8qTSaELzrkz-6sPmZ-DGtLhKWbcKPfvK9Wr5zscdk9yLftXT9iBtkR3YWscwmyiunRT152o8gsOCrp9SrivK7EcPXozSd2uI679U1OAgMD1vFo=w426-h295"  alt="Image Credit: Fred Hebert"><span class="caption-text">Image Credit: Fred Hebert</span></span></p>
-
-<p><span class='pullquote-left' data-pullquote='It becomes a kind of bucket list for your application'>
-Systems have limits.  No matter how much we, as developers and architects, like to throw around derivations of the word
-<em>scalable</em> in design discussions, the limits are there.  And you are going to hit them.  Dropping in a queue to buffer
-requests only hides the fact that there is a limit.  It becomes a kind of bucket list for your application &ndash; work you are hoping
-it will complete before it crashes or reaches the next maintenance or upgrade window.  And then, the queue has made the
-problem worse, even if you made it persistent.
-</span></p>
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/12/12/queues-dont-fix-overload/">Read on &rarr;</a>
-    </footer>
-  
 
-
-    </article>
-  
-  <div class="pagination">
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
-</div>
 <aside class="sidebar">
   
     <section>
@@ -213,6 +220,7 @@ problem worse, even if you made it persistent.
   
 </aside>
 
+
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -230,7 +238,10 @@ problem worse, even if you made it persistent.
       var disqus_shortname = 'eventuallyconsistentblog';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/';
+        var disqus_url = 'http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
