@@ -9,7 +9,7 @@
   <meta name="author" content="Joshua Goldie">
 
   
-  <meta name="description" content="Last week Vaughn Vernon teased/announced Number 9 which he proposes as an alternative to Akka&rsquo;s AtLeastOnceDelivery. One interesting difference &hellip;">
+  <meta name="description" content="Event-sourcing, streaming, and complex event processing all seem to me like related ideas that can be combined to produce reactive applications. (I &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,45 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/01/20/the-akka-persistence-journal-as-an-event-stream/">The Akka-persistence Journal as an Event Stream</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-01-20T22:22:18+00:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>10:22 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Event-sourcing, streaming, and complex event processing all seem to me like related ideas that can be combined to produce reactive applications.  (I signed the <a href="http://www.reactivemanifesto.org/">Reactive Manifesto</a> before
+it was cool&hellip;)  To that end, I have started a <a href="https://github.com/jdgoldie/akka-persistence-gridgain-experimental">project</a> to implement the akka-persistence journal using <a href="http://www.gridgain.com/">GridGain</a> as the underlying technology.  GridGain offers a chance for a unique
+take on the akka-persistence journal by leveraging its distributed persistence architecture, streaming, and event processing capabilities.</p>
+
+<p>The working premise of my project is that by modeling the journal as a stream, it is possible to generate near-real-time projections of entity state without relying on the polling mechanism of
+Akka&rsquo;s PersistentViews.  Additionally, streams derived from the journal-stream can be fed to complex event processing queries.  So far, the premise seems to be achievable.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/01/20/the-akka-persistence-journal-as-an-event-stream/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -177,6 +216,10 @@ problem worse, even if you made it persistent.
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/01/20/the-akka-persistence-journal-as-an-event-stream/">The Akka-persistence Journal as an Event Stream</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/">Reliable Delivery in Akka and Number 9</a>

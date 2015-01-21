@@ -4,7 +4,7 @@
   <title><![CDATA[Eventually Consistent]]></title>
   <link href="http://jdgoldie.github.io/atom.xml" rel="self"/>
   <link href="http://jdgoldie.github.io/"/>
-  <updated>2015-01-10T14:47:47+00:00</updated>
+  <updated>2015-01-21T03:30:32+00:00</updated>
   <id>http://jdgoldie.github.io/</id>
   <author>
     <name><![CDATA[Joshua Goldie]]></name>
@@ -12,6 +12,77 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[The Akka-persistence Journal as an Event Stream]]></title>
+    <link href="http://jdgoldie.github.io/blog/2015/01/20/the-akka-persistence-journal-as-an-event-stream/"/>
+    <updated>2015-01-20T22:22:18+00:00</updated>
+    <id>http://jdgoldie.github.io/blog/2015/01/20/the-akka-persistence-journal-as-an-event-stream</id>
+    <content type="html"><![CDATA[<p>Event-sourcing, streaming, and complex event processing all seem to me like related ideas that can be combined to produce reactive applications.  (I signed the <a href="http://www.reactivemanifesto.org/">Reactive Manifesto</a> before
+it was cool&hellip;)  To that end, I have started a <a href="https://github.com/jdgoldie/akka-persistence-gridgain-experimental">project</a> to implement the akka-persistence journal using <a href="http://www.gridgain.com/">GridGain</a> as the underlying technology.  GridGain offers a chance for a unique
+take on the akka-persistence journal by leveraging its distributed persistence architecture, streaming, and event processing capabilities.</p>
+
+<p>The working premise of my project is that by modeling the journal as a stream, it is possible to generate near-real-time projections of entity state without relying on the polling mechanism of
+Akka&rsquo;s PersistentViews.  Additionally, streams derived from the journal-stream can be fed to complex event processing queries.  So far, the premise seems to be achievable.</p>
+
+<!-- more -->
+
+
+<p>Aside from avoiding the use of PersistentViews, other interesting use-cases present themselves:</p>
+
+<ul>
+<li>Shopping cart abandonment - use <a href="http://en.wikipedia.org/wiki/Complex_event_processing">CEP</a> to detect when a cart is created and not checked out with a certain window</li>
+<li>Oversight and approvals - monitor changes to entities and trigger approval workflows if certain conditions are met</li>
+<li>Automatic escalation - issues no resolved within a window generate escalation events</li>
+</ul>
+
+
+<h3>Design</h3>
+
+<p>I settled on a design that uses a GridGain stream with three windows, an index, and the cache &ndash; something like this:</p>
+
+<p><span class="caption-wrapper center" style="width: 800px"><img class="caption" src="https://lh5.googleusercontent.com/-TiHzVi40zdQ/VL8Urf1WU1I/AAAAAAAAYuQ/OSoAivXDeDQ/w712-h344-no/JournalDesign.jpg" width="800" height="600"  alt="The Design, more or less."><span class="caption-text">The Design, more or less.</span></span></p>
+
+<p>The flow is as follows:</p>
+
+<ol>
+<li>akka-persistence adds events to the first window of the stream</li>
+<li>events are indexed for replay</li>
+<li>events are passed to the next stage</li>
+<li>projection code persists to database or other store</li>
+<li>events are routed to one or more optional stages for analysis, CEP, etc.</li>
+</ol>
+
+
+<h3>Challenges and Issues</h3>
+
+<p>One challenge of using a stream for the journal is that the journal must support deletions while streams are append-only.  To support deletions,
+the index on the initial stage tracks both a hard and soft delete &ldquo;floor&rdquo; for each persistence id and the replay logic takes this value
+into account when replaying events.  To pass deletes from akka-persistence to the stream and on to the journal, the stream models the
+journal as a command log of write and delete instructions.  Only the writes are passed to the projection window and their payloads (<code>PersistentRepr</code>)
+are unwrapped so only the first window is aware of the journal commands.</p>
+
+<p>Durability is also a challenge.  GridGain streams do not support durability mechanisms like the cache does, so the journal is, in effect, in-memory only.  This shortcoming needs to be addressed to make the implementation viable.  The same can be said of the index used to track the journal events and the delete floors.  It is currently stored in a Java Map.  A better storage mechanism &ndash; perhaps the GridGain
+cache itself &ndash; would make this part of the system more robust.</p>
+
+<h3>What Works</h3>
+
+<p>Currently, the journal passes the compatability tests.  The default projection and routing interfaces are implementated and an
+example of a default projection stage has been written.</p>
+
+<h3>Future Roadmap</h3>
+
+<ol>
+<li>Fix <a href="https://github.com/jdgoldie/akka-persistence-gridgain-experimental/issues/1">Issue #1</a></li>
+<li>Durability strategy - stream and index durability</li>
+<li>Examples - CEP examples demonstrating use-cases</li>
+<li>Performance</li>
+<li>Deployment - client v. data node deployment</li>
+<li>Migrate to Apache Ignite</li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Reliable Delivery in Akka and Number 9]]></title>

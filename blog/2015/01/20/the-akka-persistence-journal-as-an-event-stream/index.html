@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Reliable Delivery in Akka and Number 9 - Eventually Consistent</title>
+  <title>The Akka-persistence Journal as an Event Stream - Eventually Consistent</title>
   <meta name="author" content="Joshua Goldie">
 
   
-  <meta name="description" content="Last week Vaughn Vernon teased/announced Number 9 which he proposes as an alternative to Akka&rsquo;s AtLeastOnceDelivery. One interesting difference &hellip;">
+  <meta name="description" content="Event-sourcing, streaming, and complex event processing all seem to me like related ideas that can be combined to produce reactive applications. (I &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9">
+  <link rel="canonical" href="http://jdgoldie.github.io/blog/2015/01/20/the-akka-persistence-journal-as-an-event-stream">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Eventually Consistent" type="application/atom+xml">
@@ -80,7 +80,7 @@
   
   <header>
     
-      <h1 class="entry-title">Reliable Delivery in Akka and Number 9</h1>
+      <h1 class="entry-title">The Akka-persistence Journal as an Event Stream</h1>
     
     
       <p class="meta">
@@ -89,49 +89,76 @@
 
 
 
-<time class='entry-date' datetime='2015-01-07T20:29:58+00:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>7</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>8:29 pm</span></time>
+<time class='entry-date' datetime='2015-01-20T22:22:18+00:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>10:22 pm</span></time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>Last week <a href="https://vaughnvernon.co/?page_id=178">Vaughn Vernon</a> teased/announced <a href="https://vaughnvernon.co/?p=976">Number 9</a> which he proposes as an alternative to Akka&rsquo;s AtLeastOnceDelivery.  One interesting difference
-is the use of the Message Journal to store unconfirmed messages.  This design is a siginificant departure from Akka&rsquo;s AtLeastOnceDelivery.</p>
+<div class="entry-content"><p>Event-sourcing, streaming, and complex event processing all seem to me like related ideas that can be combined to produce reactive applications.  (I signed the <a href="http://www.reactivemanifesto.org/">Reactive Manifesto</a> before
+it was cool&hellip;)  To that end, I have started a <a href="https://github.com/jdgoldie/akka-persistence-gridgain-experimental">project</a> to implement the akka-persistence journal using <a href="http://www.gridgain.com/">GridGain</a> as the underlying technology.  GridGain offers a chance for a unique
+take on the akka-persistence journal by leveraging its distributed persistence architecture, streaming, and event processing capabilities.</p>
 
-<blockquote><p>You see, AtLeastOnceDelivery doesn’t by default support message persistent storage, and actually only
-offers any resemblance to it when your actor is given a chance to store a snapshot of its current state.
-Since a snapshot is not offered for every message you send via AtLeastOnceDelivery, a crash could easily
-render any number of messages undelivered.</p></blockquote>
-
-<p>Since snapshots are <em>optional</em> and in most cases <em>periodic</em> based on either message throughput or elapsed time, you should
-count on losing messages at some point.</p>
+<p>The working premise of my project is that by modeling the journal as a stream, it is possible to generate near-real-time projections of entity state without relying on the polling mechanism of
+Akka&rsquo;s PersistentViews.  Additionally, streams derived from the journal-stream can be fed to complex event processing queries.  So far, the premise seems to be achievable.</p>
 
 <!-- more -->
 
 
-<p></p>
+<p>Aside from avoiding the use of PersistentViews, other interesting use-cases present themselves:</p>
 
-<p>In addition to being responsible for keeping track of unconfirmed messages, AtLeastOnceDelivery also makes each Entity responsible for attempting redelivery of
-its own messages and tracking delivery confirmations.  <em>Number 9</em> moves the redelivery task to a separate actor named Redeliverer.  This is an interesing idea
-that appears to fix one issue I&rsquo;ve encountered with AtLeastOnceDelivery and its use of the <em>redeliveryTick</em>.</p>
+<ul>
+<li>Shopping cart abandonment - use <a href="http://en.wikipedia.org/wiki/Complex_event_processing">CEP</a> to detect when a cart is created and not checked out with a certain window</li>
+<li>Oversight and approvals - monitor changes to entities and trigger approval workflows if certain conditions are met</li>
+<li>Automatic escalation - issues no resolved within a window generate escalation events</li>
+</ul>
 
-<p>Each actor using AtLeastOnceDelivery sets up a redeliveryTick system timer to trigger a check for unconfirmed messages.  This timer fires even when the actor has no
-unconfirmed messages.  The tick has the side effect of making receiveTimeout unusable.  On a recent project that used the cluster sharding extension with passivation support,
-this conflict prevented actors from passivating correctly.  Actors using AtLeastOnceDelivery with <em>no</em> unconfirmed messages would refuse to passivate as long as they
-were receiving the redeliveryTick.</p>
 
-<p>The Redeliverer looks to move this functionality out of the entities which should allow sharding/passivation to work as designed.</p>
+<h3>Design</h3>
 
-<p>While making these departures from the current implementation, it&rsquo;s important to remember that <em>Number 9</em> is an alternative implementation of at-least-once.</p>
+<p>I settled on a design that uses a GridGain stream with three windows, an index, and the cache &ndash; something like this:</p>
 
-<blockquote><p>Since Number 9 provides an at-least-once delivery mechanism, you will likely want to take whatever design steps are necessary to make the
-[the processor] an Idempotent Receiver. This requirement will be more or less challenging depending on the state machine needed by the actor.</p></blockquote>
+<p><span class="caption-wrapper center" style="width: 800px"><img class="caption" src="https://lh5.googleusercontent.com/-TiHzVi40zdQ/VL8Urf1WU1I/AAAAAAAAYuQ/OSoAivXDeDQ/w712-h344-no/JournalDesign.jpg" width="800" height="600"  alt="The Design, more or less."><span class="caption-text">The Design, more or less.</span></span></p>
 
-<p>Because exactly-once <a href="http://brooker.co.za/blog/2014/11/15/exactly-once.html">is not what you want</a>.</p>
+<p>The flow is as follows:</p>
 
-<p>From what&rsquo;s been shared so far <em>Number 9</em> sounds like a good approach to fixing some of the issues with AtLeastOnceDelivery.  The only drawback I see at this point
-is that it&rsquo;s unreleased and I&rsquo;d really love to take a look at the code.  I&rsquo;ll be watching this tool for future articles and releases.</p>
+<ol>
+<li>akka-persistence adds events to the first window of the stream</li>
+<li>events are indexed for replay</li>
+<li>events are passed to the next stage</li>
+<li>projection code persists to database or other store</li>
+<li>events are routed to one or more optional stages for analysis, CEP, etc.</li>
+</ol>
+
+
+<h3>Challenges and Issues</h3>
+
+<p>One challenge of using a stream for the journal is that the journal must support deletions while streams are append-only.  To support deletions,
+the index on the initial stage tracks both a hard and soft delete &ldquo;floor&rdquo; for each persistence id and the replay logic takes this value
+into account when replaying events.  To pass deletes from akka-persistence to the stream and on to the journal, the stream models the
+journal as a command log of write and delete instructions.  Only the writes are passed to the projection window and their payloads (<code>PersistentRepr</code>)
+are unwrapped so only the first window is aware of the journal commands.</p>
+
+<p>Durability is also a challenge.  GridGain streams do not support durability mechanisms like the cache does, so the journal is, in effect, in-memory only.  This shortcoming needs to be addressed to make the implementation viable.  The same can be said of the index used to track the journal events and the delete floors.  It is currently stored in a Java Map.  A better storage mechanism &ndash; perhaps the GridGain
+cache itself &ndash; would make this part of the system more robust.</p>
+
+<h3>What Works</h3>
+
+<p>Currently, the journal passes the compatability tests.  The default projection and routing interfaces are implementated and an
+example of a default projection stage has been written.</p>
+
+<h3>Future Roadmap</h3>
+
+<ol>
+<li>Fix <a href="https://github.com/jdgoldie/akka-persistence-gridgain-experimental/issues/1">Issue #1</a></li>
+<li>Durability strategy - stream and index durability</li>
+<li>Examples - CEP examples demonstrating use-cases</li>
+<li>Performance</li>
+<li>Deployment - client v. data node deployment</li>
+<li>Migrate to Apache Ignite</li>
+</ol>
+
 </div>
 
 
@@ -147,7 +174,7 @@ is that it&rsquo;s unreleased and I&rsquo;d really love to take a look at the co
 
 
 
-<time class='entry-date' datetime='2015-01-07T20:29:58+00:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>7</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>8:29 pm</span></time>
+<time class='entry-date' datetime='2015-01-20T22:22:18+00:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>10:22 pm</span></time>
       
 
 
@@ -155,7 +182,7 @@ is that it&rsquo;s unreleased and I&rsquo;d really love to take a look at the co
     
       <div class="sharing">
   
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/" data-via="jdgoldie" data-counturl="http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/" >Tweet</a>
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://jdgoldie.github.io/blog/2015/01/20/the-akka-persistence-journal-as-an-event-stream/" data-via="jdgoldie" data-counturl="http://jdgoldie.github.io/blog/2015/01/20/the-akka-persistence-journal-as-an-event-stream/" >Tweet</a>
   
   
   
@@ -164,10 +191,8 @@ is that it&rsquo;s unreleased and I&rsquo;d really love to take a look at the co
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2014/12/12/queues-dont-fix-overload/" title="Previous Post: Queues Don't Fix Overload">&laquo; Queues Don&#8217;t Fix Overload</a>
+        <a class="basic-alignment left" href="/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/" title="Previous Post: Reliable Delivery in Akka and Number 9">&laquo; Reliable Delivery in Akka and Number 9</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2015/01/20/the-akka-persistence-journal-as-an-event-stream/" title="Next Post: The Akka-persistence Journal as an Event Stream">The Akka-persistence Journal as an Event Stream &raquo;</a>
       
     </p>
   </footer>
@@ -257,8 +282,8 @@ is that it&rsquo;s unreleased and I&rsquo;d really love to take a look at the co
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/';
-        var disqus_url = 'http://jdgoldie.github.io/blog/2015/01/07/reliable-delivery-in-akka-and-number-9/';
+        var disqus_identifier = 'http://jdgoldie.github.io/blog/2015/01/20/the-akka-persistence-journal-as-an-event-stream/';
+        var disqus_url = 'http://jdgoldie.github.io/blog/2015/01/20/the-akka-persistence-journal-as-an-event-stream/';
         var disqus_script = 'embed.js';
       
     (function () {
